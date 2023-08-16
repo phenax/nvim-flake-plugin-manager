@@ -54,7 +54,7 @@ let
 in
 pkgs.stdenv.mkDerivation
 {
-  name = "nvim-nix-plugin-manager";
+  name = "nvim-flake-plugin-manager";
   version = "0.0.0";
 
   phases = [ "buildPhase" "installPhase" ];
