@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "bqn": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1692049008,
+        "narHash": "sha256-cQL6jFyJvwX8qwuTTNc7wA/QOCFe5Uu4CLPA0VrDI88=",
+        "owner": "mlochbaum",
+        "repo": "BQN",
+        "rev": "1e267df0d2006e75f32c7462181fb80521205c94",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mlochbaum",
+        "repo": "BQN",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -15,6 +31,22 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "leap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1690120911,
+        "narHash": "sha256-9GFZ5CuR92kFGwh/ouqSSp14eOLZLpzpoFTEuYL7biQ=",
+        "owner": "ggandor",
+        "repo": "leap.nvim",
+        "rev": "5efe985cf68fac3b6a6dfe7a75fbfaca8db2af9c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ggandor",
+        "repo": "leap.nvim",
         "type": "github"
       }
     },
@@ -52,7 +84,9 @@
     },
     "root": {
       "inputs": {
+        "bqn": "bqn",
         "flake-utils": "flake-utils",
+        "leap": "leap",
         "nixpkgs": "nixpkgs",
         "plenary": "plenary",
         "telescope-nvim": "telescope-nvim"
