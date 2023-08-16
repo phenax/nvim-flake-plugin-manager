@@ -21,7 +21,7 @@ let
       ${getPluginConf.configLua p}
     '';
     in
-    if getPluginConf.isLazy p then
+    if getPluginConf.isLazy p && length (getPluginConf.lazyFileExts p) > 0 then
       ''
         vim.api.nvim_create_autocmd({ "BufRead", "BufWinEnter", "BufNewFile" }, {
           pattern = { ${concatStringsSep ", " (map toJSON (getPluginConf.lazyFileExts p))} },
@@ -31,27 +31,26 @@ let
     else loaderCode;
 
   # TODO: silent source ftdetect/**/*.vim after/ftdetect/**/*.vim
-  luaFile = with builtins; toFile "load_plugins.lua" (concatStringsSep "\n" [
-    ''
-      local loaded_plugins = {};
-      local function load_plugin_path(path)
-        if not vim.tbl_contains(loaded_plugins, path) then
-          vim.opt.rtp:append(path)
-          vim.opt.rtp:append(path .. 'after')
+  luaFile = with builtins; toFile "load_plugins.lua" ''
+    local loaded_plugins = {};
+    local function load_plugin_path(path)
+      if not vim.tbl_contains(loaded_plugins, path) then
+        vim.opt.rtp:append(path)
+        vim.opt.rtp:append(path .. 'after')
 
-          table.insert(loaded_plugins, path)
+        table.insert(loaded_plugins, path)
 
-          for _, plug in ipairs({ 'plugin/**/*.{vim,lua}', 'after/plugin/**/*.{vim,lua}' }) do
-            local plugin_files = vim.fn.glob(path .. plug, false, true)
-            if plugin_files then
-              vim.cmd("silent source " .. table.concat(plugin_files, " "))
-            end
+        for _, plug in ipairs({ 'plugin/**/*.{vim,lua}', 'after/plugin/**/*.{vim,lua}' }) do
+          local plugin_files = vim.fn.glob(path .. plug, false, true)
+          if plugin_files and #plugin_files > 0 then
+            vim.cmd("silent source " .. table.concat(plugin_files, " "))
           end
         end
       end
-    ''
-    (concatStringsSep "\n" (map loadPlugin allPluginNames))
-  ]);
+    end
+
+    ${concatStringsSep "\n" (map loadPlugin allPluginNames)}
+  '';
 in
 pkgs.stdenv.mkDerivation
 {

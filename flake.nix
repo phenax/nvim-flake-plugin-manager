@@ -40,11 +40,10 @@
       (system:
         let
           pkgs = import nixpkgs { inherit system; };
-          pluginsPackage = import ./plugins-package.nix {
-            inherit pkgs plugins inputs;
-          };
         in
         {
-          packages.default = pluginsPackage;
+          packages.default = import ./plugins-package.nix {
+            inherit pkgs plugins inputs;
+          };
         });
 }
