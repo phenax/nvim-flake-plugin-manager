@@ -11,28 +11,27 @@
 
   outputs = inputs@{ self, nixpkgs, flake-utils, ... }:
     let
-      pluginConfig = {
+      plugins = {
         telescope-nvim = {
           requires = [ "plenary" ];
-          config = ''
+          configLua = ''
             vim.keymap.set('n', '<leader>f', ':Telescope find_files<cr>')
           '';
+          # lazy.commands = [ ":Telescope" ];
         };
         leap = { };
         bqn = {
           rtp = "BQN/editors/vim";
-          lazy = {
-            extensions = [ "*.bqn" ];
-          };
+          lazy.exts = [ "*.bqn" ];
         };
         material = {
-          config = ''
+          configLua = ''
             vim.g.material_terminal_italics = 1
             vim.g.material_theme_style = 'ocean'
             vim.o.background = "dark"
             vim.g.base16colorspace = 256
 
-            vim.cmd('colorscheme material')
+            vim.cmd 'colorscheme material'
           '';
         };
       };
@@ -41,7 +40,9 @@
       (system:
         let
           pkgs = import nixpkgs { inherit system; };
-          pluginsPackage = import ./plugins-package.nix { inherit pkgs pluginConfig inputs; };
+          pluginsPackage = import ./plugins-package.nix {
+            inherit pkgs plugins inputs;
+          };
         in
         {
           packages.default = pluginsPackage;

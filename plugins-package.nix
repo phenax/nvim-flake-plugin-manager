@@ -1,24 +1,24 @@
-{ pkgs, pluginConfig, inputs }:
+{ pkgs, plugins, inputs }:
 let
   optional = prop: default: obj: with builtins; if hasAttr prop obj then getAttr prop obj else default;
 
   getPluginConf = with builtins; rec {
-    conf = p: optional p { } pluginConfig;
-    config = p: optional "config" "" (conf p);
+    conf = p: optional p { } plugins;
+    configLua = p: optional "configLua" "" (conf p);
     rtp = p: "${inputs."${p}"}/${optional "rtp" "" (conf p)}";
     requires = p: optional "requires" [ ] (conf p);
     isLazy = p: hasAttr "lazy" (conf p);
-    lazyFileExts = p: optional "extensions" [ ] (optional "lazy" { } (conf p));
+    lazyFileExts = p: optional "exts" [ ] (optional "lazy" { } (conf p));
   };
 
-  allPlugins = builtins.concatMap
+  allPluginNames = builtins.concatMap
     (p: [ p ] ++ getPluginConf.requires p)
-    (builtins.attrNames pluginConfig);
+    (builtins.attrNames plugins);
 
   loadPlugin = with builtins; p:
     let loaderCode = ''
       load_plugin_path(${toJSON (getPluginConf.rtp p)});
-      ${getPluginConf.config p}
+      ${getPluginConf.configLua p}
     '';
     in
     if getPluginConf.isLazy p then
@@ -50,7 +50,7 @@ let
         end
       end
     ''
-    (concatStringsSep "\n" (map loadPlugin allPlugins))
+    (concatStringsSep "\n" (map loadPlugin allPluginNames))
   ]);
 in
 pkgs.stdenv.mkDerivation
@@ -63,11 +63,8 @@ pkgs.stdenv.mkDerivation
   buildPhase = ''
     mkdir -p $out;
 
-    echo "${builtins.toString allPlugins}" > $out/log;
-
     ln -s ${luaFile} $out/load_plugins.lua
   '';
 
-  installPhase = ''
-            '';
+  installPhase = '' '';
 }
