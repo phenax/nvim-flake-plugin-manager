@@ -50,6 +50,22 @@
         "type": "github"
       }
     },
+    "material": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1675960026,
+        "narHash": "sha256-n60JXh/HLEihbbEV1A1a1reJOEUVj7jiAJqlq8JxcKk=",
+        "owner": "kaicataldo",
+        "repo": "material.vim",
+        "rev": "b47e7f884cb606c19a20e8e520dfa10c3b3a52f9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kaicataldo",
+        "repo": "material.vim",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1692128808,
@@ -87,6 +103,7 @@
         "bqn": "bqn",
         "flake-utils": "flake-utils",
         "leap": "leap",
+        "material": "material",
         "nixpkgs": "nixpkgs",
         "plenary": "plenary",
         "telescope-nvim": "telescope-nvim"
