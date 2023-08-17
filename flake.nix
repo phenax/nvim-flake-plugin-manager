@@ -1,49 +1,82 @@
 {
+  description = "A very basic flake";
+
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    telescope-nvim = { url = "github:nvim-telescope/telescope.nvim"; flake = false; };
-    plenary = { url = "github:nvim-lua/plenary.nvim"; flake = false; };
-    leap = { url = "github:ggandor/leap.nvim"; flake = false; };
-    bqn = { url = "github:mlochbaum/BQN"; flake = false; };
-    material = { url = "github:kaicataldo/material.vim"; flake = false; };
   };
 
-  outputs = inputs@{ self, nixpkgs, flake-utils, ... }:
-    let
-      plugins = {
-        telescope-nvim = {
-          requires = [ "plenary" ];
-          configLua = ''
-            vim.keymap.set('n', '<leader>f', ':Telescope find_files<cr>')
-          '';
-          # lazy.commands = [ ":Telescope" ];
-        };
-        leap = { };
-        bqn = {
-          rtp = "BQN/editors/vim";
-          lazy.exts = [ "*.bqn" ];
-        };
-        material = {
-          configLua = ''
-            vim.g.material_terminal_italics = 1
-            vim.g.material_theme_style = 'ocean'
-            vim.o.background = "dark"
-            vim.g.base16colorspace = 256
-
-            vim.cmd 'colorscheme material'
-          '';
-        };
-      };
-    in
-    flake-utils.lib.eachDefaultSystem
-      (system:
+  outputs = { self, nixpkgs }: {
+    lib = {
+      mkPlugins = { plugins, sources, system }:
         let
           pkgs = import nixpkgs { inherit system; };
-        in
-        {
-          packages.default = import ./plugins-package.nix {
-            inherit pkgs plugins inputs;
+
+          optional = prop: default: obj: with builtins; if hasAttr prop obj then getAttr prop obj else default;
+
+          getPluginConf = with builtins; rec {
+            conf = p: optional p { } plugins;
+            configLua = p: optional "configLua" "" (conf p);
+            rtp = p: "${sources."${p}"}/${optional "rtp" "" (conf p)}";
+            requires = p: optional "requires" [ ] (conf p);
+            isLazy = p: hasAttr "lazy" (conf p);
+            lazyFileExts = p: optional "exts" [ ] (optional "lazy" { } (conf p));
           };
-        });
+
+          allPluginNames = builtins.concatMap
+            (p: [ p ] ++ getPluginConf.requires p)
+            (builtins.attrNames plugins);
+
+          loadPlugin = with builtins; p:
+            let loaderCode = ''
+              load_plugin_path(${toJSON (getPluginConf.rtp p)});
+              ${getPluginConf.configLua p}
+            '';
+            in
+            if getPluginConf.isLazy p && length (getPluginConf.lazyFileExts p) > 0 then
+              ''
+                vim.api.nvim_create_autocmd({ "BufRead", "BufWinEnter", "BufNewFile" }, {
+                  pattern = { ${concatStringsSep ", " (map toJSON (getPluginConf.lazyFileExts p))} },
+                  callback = function() ${loaderCode} end,
+                });
+              ''
+            else loaderCode;
+
+          # TODO: silent source ftdetect/**/*.vim after/ftdetect/**/*.vim
+          luaFile = with builtins; toFile "load_plugins.lua" ''
+            local loaded_plugins = {};
+            local function load_plugin_path(path)
+              if not vim.tbl_contains(loaded_plugins, path) then
+                vim.opt.rtp:append(path)
+                vim.opt.rtp:append(path .. 'after')
+
+                table.insert(loaded_plugins, path)
+
+                for _, plug in ipairs({ 'plugin/**/*.{vim,lua}', 'after/plugin/**/*.{vim,lua}' }) do
+                  local plugin_files = vim.fn.glob(path .. plug, false, true)
+                  if plugin_files and #plugin_files > 0 then
+                    vim.cmd("silent source " .. table.concat(plugin_files, " "))
+                  end
+                end
+              end
+            end
+
+            ${concatStringsSep "\n" (map loadPlugin allPluginNames)}
+          '';
+        in
+        pkgs.stdenv.mkDerivation {
+          name = "nvim-flake-plugin-manager";
+          version = "0.0.0";
+
+          phases = [ "buildPhase" "installPhase" ];
+
+          buildPhase = ''
+            mkdir -p $out;
+
+            ln -s ${luaFile} $out/load_plugins.lua
+          '';
+
+          installPhase = '' '';
+        };
+    };
+  };
 }
