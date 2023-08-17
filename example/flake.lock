@@ -82,34 +82,15 @@
         "type": "github"
       }
     },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1692190437,
-        "narHash": "sha256-yJUZzmzSmDYb9ONPnMQDru66RjZgGQZRvj3tQebkexk=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "9b2aa98db6b10503666a50f4eb93b2fc0d57bde5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nvim-plugin-manager": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_2"
-      },
       "locked": {
         "lastModified": 0,
-        "narHash": "sha256-HrmZKw2UL+Yj4Rt9mNxRILl7wWdvrnUMgDqF9AV5i8M=",
-        "path": "/nix/store/g6xc3pnhq7ig7sykdil9581a91lr9x77-source",
+        "narHash": "sha256-7dmNdEn1msKzBMtFV+W6cxMfl6S2SluOZL/RRUkz8TI=",
+        "path": "/nix/store/i6a2phvik9y0gv8vsmbn3bsqhpyiq4p6-source",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/g6xc3pnhq7ig7sykdil9581a91lr9x77-source",
+        "path": "/nix/store/i6a2phvik9y0gv8vsmbn3bsqhpyiq4p6-source",
         "type": "path"
       }
     },
@@ -138,7 +119,7 @@
         "nixpkgs": "nixpkgs",
         "nvim-plugin-manager": "nvim-plugin-manager",
         "plenary": "plenary",
-        "telescope-nvim": "telescope-nvim"
+        "telescope": "telescope"
       }
     },
     "systems": {
@@ -156,7 +137,7 @@
         "type": "github"
       }
     },
-    "telescope-nvim": {
+    "telescope": {
       "flake": false,
       "locked": {
         "lastModified": 1691627694,

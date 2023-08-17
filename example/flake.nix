@@ -1,9 +1,13 @@
 {
+  description = "Example neovim plugin configurations";
+
   inputs = {
     nvim-plugin-manager.url = "../";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    telescope-nvim = { url = "github:nvim-telescope/telescope.nvim"; flake = false; };
+
+    # Neovim plugin sources
+    telescope = { url = "github:nvim-telescope/telescope.nvim"; flake = false; };
     plenary = { url = "github:nvim-lua/plenary.nvim"; flake = false; };
     leap = { url = "github:ggandor/leap.nvim"; flake = false; };
     bqn = { url = "github:mlochbaum/BQN"; flake = false; };
@@ -13,12 +17,9 @@
   outputs = sources@{ self, nixpkgs, flake-utils, nvim-plugin-manager, ... }:
     let
       plugins = {
-        telescope-nvim = {
-          requires = [ "plenary" ];
-          configLua = ''
-            vim.keymap.set('n', '<leader>f', ':Telescope find_files<cr>')
-          '';
-          lazy.commands = [ "Telescope" ];
+        telescope = {
+          dependencies = [ "plenary" ];
+          configModule = "_telescope";
         };
         leap = { };
         bqn = {
@@ -39,7 +40,10 @@
     in
     flake-utils.lib.eachDefaultSystem (system: {
       packages.default = nvim-plugin-manager.lib.mkPlugins {
-        inherit plugins sources system;
+        inherit plugins sources;
+        pkgs = nixpkgs.legacyPackages.${system};
+        installPath = "~/dev/projects/nvim-nix-plugin-manager/example/result";
+        modulePath = ./.;
       };
     });
 }
