@@ -36,10 +36,18 @@
             in
             if length (getPluginConf.lazyFileExts p) > 0 then
               ''
-                vim.api.nvim_create_autocmd({ "BufRead", "BufWinEnter", "BufNewFile" }, {
-                  pattern = { ${concatStringsSep ", " (map toJSON (getPluginConf.lazyFileExts p))} },
-                  callback = function() ${loaderCode} end,
-                });
+                noop(${toJSON p});
+                (function()
+                  local group = vim.api.nvim_create_augroup(${toJSON "nvim_flake_lazy__${p}"}, { clear = true });
+                  vim.api.nvim_create_autocmd({ "BufRead", "BufWinEnter", "BufNewFile" }, {
+                    group = group,
+                    pattern = { ${concatStringsSep ", " (map toJSON (getPluginConf.lazyFileExts p))} },
+                    callback = function()
+                      vim.api.nvim_del_augroup_by_id(group);
+                      ${loaderCode}
+                    end,
+                  });
+                end)();
               ''
             else if length (getPluginConf.lazyCommands p) > 0 then
             # TODO: Support range commands
@@ -59,6 +67,7 @@
           # TODO: silent source ftdetect/**/*.vim after/ftdetect/**/*.vim
           luaFile = with builtins; toFile "load_plugins.lua" ''
             local loaded_plugins = {};
+            local function noop() end;
             local function load_plugin_path(path)
               if not vim.tbl_contains(loaded_plugins, path) then
                 vim.opt.rtp:append(path)
