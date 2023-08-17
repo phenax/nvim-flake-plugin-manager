@@ -18,8 +18,10 @@
             configLua = p: optional "configLua" "" (conf p);
             rtp = p: "${sources."${p}"}/${optional "rtp" "" (conf p)}";
             requires = p: optional "requires" [ ] (conf p);
+
             isLazy = p: hasAttr "lazy" (conf p);
             lazyFileExts = p: optional "exts" [ ] (optional "lazy" { } (conf p));
+            lazyCommands = p: optional "commands" [ ] (optional "lazy" { } (conf p));
           };
 
           allPluginNames = builtins.concatMap
@@ -32,13 +34,26 @@
               ${getPluginConf.configLua p}
             '';
             in
-            if getPluginConf.isLazy p && length (getPluginConf.lazyFileExts p) > 0 then
+            if length (getPluginConf.lazyFileExts p) > 0 then
               ''
                 vim.api.nvim_create_autocmd({ "BufRead", "BufWinEnter", "BufNewFile" }, {
                   pattern = { ${concatStringsSep ", " (map toJSON (getPluginConf.lazyFileExts p))} },
                   callback = function() ${loaderCode} end,
                 });
               ''
+            else if length (getPluginConf.lazyCommands p) > 0 then
+            # TODO: Support range commands
+              toString
+                (map
+                  (cmd: ''
+                    vim.api.nvim_create_user_command(${toJSON cmd}, function(opt)
+                      vim.api.nvim_del_user_command(${toJSON cmd});
+                      ${loaderCode}
+                      vim.cmd(opt.name .. " " .. opt.args);
+                    end, {})
+                  '')
+                  (getPluginConf.lazyCommands p))
+
             else loaderCode;
 
           # TODO: silent source ftdetect/**/*.vim after/ftdetect/**/*.vim

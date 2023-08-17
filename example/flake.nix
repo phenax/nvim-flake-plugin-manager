@@ -1,6 +1,6 @@
 {
   inputs = {
-    nvim-plugin-manager.url = "path:../";
+    nvim-plugin-manager.url = "../";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     telescope-nvim = { url = "github:nvim-telescope/telescope.nvim"; flake = false; };
@@ -18,7 +18,7 @@
           configLua = ''
             vim.keymap.set('n', '<leader>f', ':Telescope find_files<cr>')
           '';
-          # lazy.commands = [ ":Telescope" ];
+          lazy.commands = [ "Telescope" ];
         };
         leap = { };
         bqn = {
