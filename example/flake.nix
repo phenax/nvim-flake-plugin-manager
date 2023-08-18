@@ -43,7 +43,7 @@
         packages.default = nvim-plugin-manager.lib.mkPlugins {
           inherit plugins sources pkgs;
           modulePath = ./.;
-          doCheck = true;
+          doCheck = false;
           extraModulesPre = [ "settings" ];
           extraModules = [ ];
         };

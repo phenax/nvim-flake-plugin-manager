@@ -21,9 +21,9 @@ let
     lazyCommands = p: prop "commands" [ ] (prop "lazy" { } (conf p));
   };
 
-  allPluginNames = builtins.concatMap
+  allPluginNames = pkgs.lib.unique (builtins.concatMap
     (p: getPluginConf.dependencies p ++ [ p ])
-    (builtins.attrNames plugins);
+    (builtins.attrNames plugins));
 
   loadPlugin = p:
     let loaderCode = ''
@@ -120,8 +120,8 @@ pkgs.stdenv.mkDerivation {
   '';
 
   checkPhase = ''
-    # Temporarily disabled because nvim pipes most logs to stderr
-    # ${pkgs.neovim}/bin/nvim --headless --clean -c "luafile $out/load_plugins.lua" -c 'luafile ${luaTestFile}' 2> /tmp/nvim-error-logs;
+    # TODO: disable it because nvim pipes most logs to stderr
+    ${pkgs.neovim}/bin/nvim --headless --clean -c "luafile $out/load_plugins.lua" -c 'luafile ${luaTestFile}' 2> /tmp/nvim-error-logs;
 
     if [ -f /tmp/nvim-error-logs ] && [ "$(wc -l /tmp/nvim-error-logs | awk '{print $1}')" != 0 ]; then
       cat /tmp/nvim-error-logs || true;
