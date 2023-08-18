@@ -1,38 +1,38 @@
 { pkgs
 , plugins
 , sources
-, installPath
 , modulePath
 }:
 with builtins;
 let
-  optional = prop: default: obj: if hasAttr prop obj then getAttr prop obj else default;
+  prop = key: default: obj: if hasAttr key obj then getAttr key obj else default;
 
   getPluginConf = rec {
-    conf = p: optional p { } plugins;
-    configLua = p: optional "configLua" "" (conf p);
-    configModule = p: optional "configModule" "" (conf p);
-    rtp = p: "${sources.${p}}/${optional "rtp" "" (conf p)}";
-    dependencies = p: optional "dependencies" [ ] (conf p);
+    conf = p: prop p { } plugins;
+    configLua = p: prop "configLua" "" (conf p);
+    configModule = p: prop "configModule" "" (conf p);
+    rtp = p: "${sources.${p}}/${prop "rtp" "" (conf p)}";
+    dependencies = p: prop "dependencies" [ ] (conf p);
     isLazy = p: hasAttr "lazy" (conf p);
-    lazyFileExts = p: optional "exts" [ ] (optional "lazy" { } (conf p));
-    lazyCommands = p: optional "commands" [ ] (optional "lazy" { } (conf p));
+    lazyFileExts = p: prop "exts" [ ] (prop "lazy" { } (conf p));
+    lazyCommands = p: prop "commands" [ ] (prop "lazy" { } (conf p));
   };
 
   allPluginNames = builtins.concatMap
-    (p: [ p ] ++ getPluginConf.dependencies p)
+    (p: getPluginConf.dependencies p ++ [ p ])
     (builtins.attrNames plugins);
 
   loadPlugin = p:
     let loaderCode = ''
-      scope(function()
-        nf_loadPlugin(${toJSON (getPluginConf.rtp p)});
+      nf_loadPlugin(${toJSON p}, ${toJSON (getPluginConf.rtp p)}, function ()
         ${getPluginConf.configLua p}
+
         ${if getPluginConf.configModule p == "" then "" else ''
           local configModule = require(${toJSON (getPluginConf.configModule p)})
           configModule.setup()
+          return configModule
         ''}
-      end)
+      end);
     '';
     in
     if length (getPluginConf.lazyFileExts p) > 0 then
@@ -50,7 +50,6 @@ let
         end);
       ''
     else if length (getPluginConf.lazyCommands p) > 0 then
-    # TODO: Support range commands
       toString
         (map
           (cmd: ''
@@ -63,18 +62,16 @@ let
           (getPluginConf.lazyCommands p))
     else loaderCode;
 
-  # TODO: source ftdetect
   luaFile = toFile "load_plugins.lua" ''
-    local pluginInstallPath = vim.fn.expand(${toJSON installPath});
-    vim.opt.rtp:append(pluginInstallPath .. "/*");
-    vim.opt.rtp:append(pluginInstallPath .. "/*/after");
     vim.opt.rtp:append(${toJSON modulePath});
 
-    local loaded_plugins = {};
+    local loadedPlugins = {};
     local function scope(fn) fn() end;
-    local function nf_loadPlugin(path)
-      if not vim.tbl_contains(loaded_plugins, path) then
-        table.insert(loaded_plugins, path)
+    local function nf_loadPlugin(name, path, configure)
+      if loadedPlugins[name] == nil then
+        loadedPlugins[name] = { path = path };
+        vim.opt.rtp:append(path);
+        vim.opt.rtp:append(path .. "after");
 
         for _, plug in ipairs({ 'plugin/**/*.{vim,lua}', 'after/plugin/**/*.{vim,lua}' }) do
           local plugin_files = vim.fn.glob(path .. plug, false, true)
@@ -82,25 +79,33 @@ let
             vim.cmd("silent source " .. table.concat(plugin_files, " "))
           end
         end
+
+        if configure ~= nil then
+          loadedPlugins[name].module = configure()
+        end
       end
     end
 
     ${concatStringsSep "\n" (map loadPlugin allPluginNames)}
   '';
 
-  # installCommand = pkgs.runCommandLocal "nvim-nix-install-command" { nativeBuildInputs = [ pkgs.xorg.lndir ]; } '' '';
+  luaTestFile = toFile "test.lua" ''
+    -- TODO: Add some basic assertions?
+    print(vim.inspect(vim.o.rtp))
+
+    vim.cmd [[q]]
+  '';
 in
 pkgs.stdenv.mkDerivation {
   name = "nvim-flake-plugin-manager";
   version = "0.0.0";
 
-  src = ./.;
+  doCheck = true;
+  phases = [ "installPhase" "checkPhase" ];
 
-  phases = [ "buildPhase" "installPhase" ];
+  buildInputs = [ pkgs.neovim ];
 
-  buildInputs = [ ];
-
-  buildPhase = ''
+  installPhase = ''
     mkdir -p $out;
 
     ${toString (map (p: "ln -s ${sources.${p}} $out/${p};") allPluginNames)}
@@ -108,5 +113,8 @@ pkgs.stdenv.mkDerivation {
     ln -s ${luaFile} $out/load_plugins.lua
   '';
 
-  installPhase = '' '';
+  checkPhase = ''
+    ls $out
+    nvim --headless --clean -c "luafile $out/load_plugins.lua" -c 'luafile ${luaTestFile}'
+  '';
 }

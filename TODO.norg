@@ -1,0 +1,5 @@
+* TODO
+  - ( ) Support range commands for lazy commands
+  - ( ) ftdetect
+  - ( ) Maybe generate script that you run to set things up? (bad)
+  - ( ) Use nix profile install somehow for a fixed path?

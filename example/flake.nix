@@ -14,7 +14,7 @@
     material = { url = "github:kaicataldo/material.vim"; flake = false; };
   };
 
-  outputs = sources@{ self, nixpkgs, flake-utils, nvim-plugin-manager, ... }:
+  outputs = sources@{ self, nixpkgs, flake-utils, home-manager, nvim-plugin-manager, ... }:
     let
       plugins = {
         telescope = {
@@ -30,20 +30,19 @@
           configLua = ''
             vim.g.material_terminal_italics = 1
             vim.g.material_theme_style = 'ocean'
-            vim.o.background = "dark"
-            vim.g.base16colorspace = 256
-
             vim.cmd 'colorscheme material'
           '';
         };
       };
     in
-    flake-utils.lib.eachDefaultSystem (system: {
-      packages.default = nvim-plugin-manager.lib.mkPlugins {
-        inherit plugins sources;
+    flake-utils.lib.eachDefaultSystem (system:
+      let
         pkgs = nixpkgs.legacyPackages.${system};
-        installPath = "~/dev/projects/nvim-nix-plugin-manager/example/result";
-        modulePath = ./.;
-      };
-    });
+      in
+      {
+        packages.default = nvim-plugin-manager.lib.mkPlugins {
+          inherit plugins sources pkgs;
+          modulePath = ./.;
+        };
+      });
 }
