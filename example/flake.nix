@@ -44,6 +44,8 @@
           inherit plugins sources pkgs;
           modulePath = ./.;
           doCheck = true;
+          extraModulesPre = [ "settings" ];
+          extraModules = [ ];
         };
       });
 }

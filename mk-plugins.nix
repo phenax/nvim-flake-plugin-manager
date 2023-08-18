@@ -3,6 +3,8 @@
 , sources
 , modulePath
 , doCheck ? false
+, extraModulesPre ? [ ]
+, extraModules ? [ ]
 }:
 with builtins;
 let
@@ -66,6 +68,8 @@ let
   luaFile = toFile "load_plugins.lua" ''
     vim.opt.rtp:append(${toJSON modulePath});
 
+    ${toString (map (m: "require(${toJSON m});") extraModulesPre)}
+
     local loadedPlugins = {};
     local function scope(fn) fn() end;
     local function nf_loadPlugin(name, path, configure)
@@ -88,6 +92,8 @@ let
     end
 
     ${concatStringsSep "\n" (map loadPlugin allPluginNames)}
+
+    ${toString (map (m: "require(${toJSON m});") extraModules)}
   '';
 
   luaTestFile = toFile "test.lua" ''
@@ -114,11 +120,12 @@ pkgs.stdenv.mkDerivation {
   '';
 
   checkPhase = ''
-    ${pkgs.neovim}/bin/nvim --headless --clean -c "luafile $out/load_plugins.lua" -c 'luafile ${luaTestFile}' 2> /tmp/nvim-error-logs;
+    # Temporarily disabled because nvim pipes most logs to stderr
+    # ${pkgs.neovim}/bin/nvim --headless --clean -c "luafile $out/load_plugins.lua" -c 'luafile ${luaTestFile}' 2> /tmp/nvim-error-logs;
 
-    if [ "$(wc -l /tmp/nvim-error-logs | awk '{print $1}')" != 0 ]; then
-      cat /tmp/nvim-error-logs;
-      rm /tmp/nvim-error-logs;
+    if [ -f /tmp/nvim-error-logs ] && [ "$(wc -l /tmp/nvim-error-logs | awk '{print $1}')" != 0 ]; then
+      cat /tmp/nvim-error-logs || true;
+      rm -f /tmp/nvim-error-logs || true;
       exit 1;
     fi;
   '';
