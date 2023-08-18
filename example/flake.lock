@@ -118,12 +118,12 @@
     "nvim-plugin-manager": {
       "locked": {
         "lastModified": 0,
-        "narHash": "sha256-+tcafR9aWDRaW/jmT1LdEkfyqE5MEXCuiKyXyZzOHfo=",
-        "path": "/nix/store/1mlvb8flacjwbfgbqhlr87mz8rsmw1ia-source",
+        "narHash": "sha256-loqDB9qphxkCGtI2DcF5Vpld+VfhOld09moXFtQFu2s=",
+        "path": "/nix/store/qsm9sk3sk45l2sj7975hc1xwm51dgyzd-source",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/1mlvb8flacjwbfgbqhlr87mz8rsmw1ia-source",
+        "path": "/nix/store/qsm9sk3sk45l2sj7975hc1xwm51dgyzd-source",
         "type": "path"
       }
     },

@@ -2,6 +2,7 @@
 , plugins
 , sources
 , modulePath
+, doCheck ? false
 }:
 with builtins;
 let
@@ -97,13 +98,12 @@ let
   '';
 in
 pkgs.stdenv.mkDerivation {
+  inherit doCheck;
+
   name = "nvim-flake-plugin-manager";
   version = "0.0.0";
 
-  doCheck = true;
   phases = [ "installPhase" "checkPhase" ];
-
-  buildInputs = [ pkgs.neovim ];
 
   installPhase = ''
     mkdir -p $out;
@@ -114,7 +114,12 @@ pkgs.stdenv.mkDerivation {
   '';
 
   checkPhase = ''
-    ls $out
-    nvim --headless --clean -c "luafile $out/load_plugins.lua" -c 'luafile ${luaTestFile}'
+    ${pkgs.neovim}/bin/nvim --headless --clean -c "luafile $out/load_plugins.lua" -c 'luafile ${luaTestFile}' 2> /tmp/nvim-error-logs;
+
+    if [ "$(wc -l /tmp/nvim-error-logs | awk '{print $1}')" != 0 ]; then
+      cat /tmp/nvim-error-logs;
+      rm /tmp/nvim-error-logs;
+      exit 1;
+    fi;
   '';
 }
