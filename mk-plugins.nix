@@ -6,6 +6,7 @@
 , extraModulesPre ? [ ]
 , extraModules ? [ ]
 }:
+
 with builtins;
 let
   prop = key: default: obj: if hasAttr key obj then getAttr key obj else default;
@@ -16,13 +17,14 @@ let
     configModule = p: prop "configModule" "" (conf p);
     rtp = p: "${sources.${p}}/${prop "rtp" "" (conf p)}";
     dependencies = p: prop "dependencies" [ ] (conf p);
+    requiredBy = p: prop "requiredBy" [ ] (conf p);
     isLazy = p: hasAttr "lazy" (conf p);
     lazyFileExts = p: prop "exts" [ ] (prop "lazy" { } (conf p));
     lazyCommands = p: prop "commands" [ ] (prop "lazy" { } (conf p));
   };
 
   allPluginNames = pkgs.lib.unique (builtins.concatMap
-    (p: getPluginConf.dependencies p ++ [ p ])
+    (p: getPluginConf.dependencies p ++ [ p ] ++ getPluginConf.requiredBy p)
     (builtins.attrNames plugins));
 
   loadPlugin = p:
@@ -100,6 +102,7 @@ let
     -- TODO: Add some basic assertions?
     print(vim.inspect(vim.o.rtp))
 
+    -- Quit when done
     vim.cmd [[q]]
   '';
 in

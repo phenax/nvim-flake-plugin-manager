@@ -1,4 +1,8 @@
 * TODO
+  - ( ) lazy.keybinds
+  - ( ) lazy.defer
+  - ( ) Fix test failing case
+  - ( ) Project local configuration?
   - ( ) Support range commands for lazy commands
   - ( ) ftdetect
   - ( ) Maybe generate script that you run to set things up? (bad)
